@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Feb  1 23:21:01 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Feb 18 17:29:39 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -9,20 +9,6 @@
                 {
                     "name": "balance",
                     "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "close",
-            "base": "",
-            "fields": [
-                {
-                    "name": "owner",
-                    "type": "name"
-                },
-                {
-                    "name": "symbol",
-                    "type": "symbol"
                 }
             ]
         },
@@ -77,38 +63,6 @@
             ]
         },
         {
-            "name": "open",
-            "base": "",
-            "fields": [
-                {
-                    "name": "owner",
-                    "type": "name"
-                },
-                {
-                    "name": "symbol",
-                    "type": "symbol"
-                },
-                {
-                    "name": "ram_payer",
-                    "type": "name"
-                }
-            ]
-        },
-        {
-            "name": "retire",
-            "base": "",
-            "fields": [
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "memo",
-                    "type": "string"
-                }
-            ]
-        },
-        {
             "name": "transfer",
             "base": "",
             "fields": [
@@ -134,11 +88,6 @@
     "types": [],
     "actions": [
         {
-            "name": "close",
-            "type": "close",
-            "ricardian_contract": ""
-        },
-        {
             "name": "create",
             "type": "create",
             "ricardian_contract": ""
@@ -146,16 +95,6 @@
         {
             "name": "issue",
             "type": "issue",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "open",
-            "type": "open",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "retire",
-            "type": "retire",
             "ricardian_contract": ""
         },
         {

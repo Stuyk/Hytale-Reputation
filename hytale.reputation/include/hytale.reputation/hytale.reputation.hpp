@@ -10,25 +10,34 @@ namespace stuyk_eos {
    using namespace std;
    using namespace eosio;
 
-   const name     token_contract_name = name("myhytalecash");          // Contract we are interacting with.
-   const symbol   hrep_symbol = symbol(symbol_code("HREP"), 4);        // Default Symbol
-   const asset    default_mine_amount = asset(5'0000ull, hrep_symbol); // 5.0000 unsigned long long
+   // Properties
+   const name     token_contract_name = name("hytaletokens");          // Contract we are interacting with.
+   const symbol   hrep_symbol = symbol(symbol_code("HYTALE"), 4);        // Default Symbol
+   // Staking
    const uint64_t seconds_in_a_day = 86400;
    const uint64_t unstake_days = 3;
+   // Assets
+   const asset maximum_supply = asset(20000000'0000ull, hrep_symbol);
+   const asset    default_mine_amount = asset(5'0000ull, hrep_symbol);
+   
+   struct [[eosio::table("state"), eosio::contract("hytale.reputation")]] state {
+      uint8_t is_initialized = 0;
+
+      EOSLIB_SERIALIZE(state, (is_initialized))
+   };
+   typedef eosio::singleton<name("state"), state> state_table_s;
 
    // Code, Scope, Table
    // (hytale.reputation, user, reputation)
    struct [[eosio::table("reputation"), eosio::contract("hytale.reputation")]] reputation {
       name              user;                 // The user that this reputation belongs to.
       time_point_sec    next_claim_time;      // The next time the user can claim tokens.
-      uint64_t          rep_left_for_day = 5; // Reputation left for the next 24 hours.
-      bool              is_server = false;
-      asset             staked_tokens;
-      time_point_sec    unstake_time;
-      asset             unstake_amount;
+      asset             rep_left_for_day = default_mine_amount; // Reputation left for the next 24 hours.
+      bool              is_server        = false;
+      asset             staked_tokens    = asset(0'0000ull, hrep_symbol);
 
       uint64_t primary_key() const { return user.value; }
-      EOSLIB_SERIALIZE(reputation, (user)(next_claim_time)(rep_left_for_day)(is_server)(staked_tokens)(unstake_time)(unstake_amount))
+      EOSLIB_SERIALIZE(reputation, (user)(next_claim_time)(rep_left_for_day)(is_server)(staked_tokens))
    };
    typedef eosio::multi_index<name("reputation"), reputation> reputation_table;
 
@@ -38,17 +47,16 @@ namespace stuyk_eos {
          using contract::contract;
          hytale_reputation(name s, name code, datastream<const char*> ds);
 
+         [[eosio::action]]
+         void init();
+
          // Register Account to Hytale Reputation
          [[eosio::action]]
          void reguser( name user, string memo );
 
          // Mine Hytale Reputation and Give it to Another Player
          [[eosio::action]]
-         void mine( name user_from, name user_to, string memo );
-
-         // Stake your tokens in exchange for Hytale Reputation.
-         [[eosio::action]]
-         void stake( name user, asset quantity, string memo );
+         void mine( name user_from, name user_to, asset quantity, string memo );
 
          // Register as a server owner.
          [[eosio::action]]
@@ -61,9 +69,5 @@ namespace stuyk_eos {
          // Unstake an amount of tokens.
          [[eosio::action]]
          void unstake( name user, asset quantity, string memo );
-
-         // Claim staked tokens after a set period of time. ie. 3 days.
-         [[eosio::action]]
-         void claim ( name user, string memo );
    };
 }

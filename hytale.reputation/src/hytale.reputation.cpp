@@ -4,6 +4,22 @@ namespace stuyk_eos {
    hytale_reputation::hytale_reputation(name reciever, name code, datastream<const char*> ds) 
    : contract(reciever, code, ds) {}
 
+   // Initializes token creation.
+   void hytale_reputation::init() {
+      require_auth(_self);
+
+      state_table_s _state(_self, _self.value);
+      auto state = _state.get_or_create(_self, {1});
+      _state.set(state, _self);
+
+      action(
+         {{ _self, name("active") }, { token_contract_name, name("active")}},
+         token_contract_name,
+         name("create"),
+         std::make_tuple(_self, maximum_supply) // issuer, maximum_supply
+      ).send();
+   }
+
    // Register a new user to recieve Hytale coins.
    void hytale_reputation::reguser( name user, string memo ) {
       require_auth(user);
@@ -20,10 +36,15 @@ namespace stuyk_eos {
    }
 
    // Mine a new token and utilize the token contract to issue a new token.
-   void hytale_reputation::mine( name from, name to, string memo ) {
+   void hytale_reputation::mine( name from, name to, asset quantity, string memo ) {
       require_auth(from);
       require_recipient(from);
       require_recipient(to);
+      
+      // Symbol Check
+      eosio_assert(quantity.is_valid(), "not a valid quantity");
+      eosio_assert(quantity.symbol == hrep_symbol, "smybol mismatch");
+      eosio_assert(quantity.amount != 0, "amount must be greater than zero");
 
       reputation_table rep_table = reputation_table(_self, _self.value);
       auto user_from = rep_table.find(from.value);
@@ -31,59 +52,51 @@ namespace stuyk_eos {
 
       auto user_to = rep_table.find(to.value);
       eosio_assert(user_to != rep_table.end(), "Reciever has not been registered yet.");
-
       eosio_assert(memo.size() <= 256, "memo is too big");
 
-      bool new_claim = false;
-      // Try claiming new
-      if (user_from->rep_left_for_day == 0) {
-         eosio_assert(time_point_sec(now()) >= user_from->next_claim_time, "user new claim time is not up.");
-         new_claim = true;
+      bool new_claim_period = false;
+
+      // If a new day has started for the user's mining period, refresh available amount.
+      if (time_point_sec(now()) >= user_from->next_claim_time) {
+         new_claim_period = true;
       }
 
+      if (!new_claim_period) {
+         eosio_assert(quantity.amount <= user_from->rep_left_for_day.amount, "mining period exceeded, wait 24 hours and try again");
+      }
+
+      // If a new claim period has been reached... reset the mine amount.
+      // As well as subtract the quantity we need to subtract.
       rep_table.modify(user_from, from, [&](auto& rep) {
-         if (new_claim) {
-            rep.rep_left_for_day = (default_mine_amount.amount - 1);
-         } else {
-            rep.rep_left_for_day -= 1;
+         if (new_claim_period) {
+            rep.rep_left_for_day.amount = default_mine_amount.amount;
          }
+
+         rep.rep_left_for_day.amount -= quantity.amount;
       });
 
-      // Send Action to Token Contract, Needs eosio.code permissions.
-      // Issue a single token to the user we are mining to.
-      action(
-         permission_level{ _self, name("active") },
-         token_contract_name, // 
-         name("issue"),       // Action
-         std::make_tuple(to, asset(1'0000ull, hrep_symbol), "Mined a new token.")  // name to, asset quantity, string memo
-      ).send();
-   }
+      if (user_to->is_server) {
+         action(
+            {{ _self, name("active") }},
+            token_contract_name,
+            name("issue"),       // Action
+            std::make_tuple(_self, quantity, std::string("Reputation Earned as Server Owner"))  // name to, asset quantity, string memo
+         ).send();
 
-   void hytale_reputation::stake( name user, asset quantity, string memo ) {
-      require_auth(user);
-      require_recipient(user);
-
-      eosio_assert(memo.size() <= 256, "memo too large");
-
-      eosio_assert(quantity.amount != 0, "amount must be greater than zero");
-      asset actual_amount = asset(quantity.amount, hrep_symbol); // Re-Classify Currency
-
-      reputation_table rep_table = reputation_table(_self, _self.value);
-      auto user_itr = rep_table.find(user.value);
-      eosio_assert(user_itr != rep_table.end(), "User has not been registered yet.");
-      eosio_assert(user_itr->is_server, "User is not registered as a server owner.");
-
-      rep_table.modify(user_itr, user, [&](auto& rep) {
-         rep.staked_tokens.amount += actual_amount.amount;
-      });
-
-      // Action
-      action(
-         permission_level{ user, name("active") },
-         token_contract_name, // 
-         name("transfer"),    // Action
-         std::make_tuple(user, token_contract_name, actual_amount, "Staked tokens for reputation.")  // name to, asset quantity, string memo
-      ).send();
+         rep_table.modify(user_to, _self, [&](auto& rep) {
+            rep.staked_tokens.amount = (quantity.amount + rep.staked_tokens.amount);
+         });
+      } else {
+         // Not Staking
+         // Send Action to Token Contract, Needs eosio.code permissions.
+         // Issue a single token to the user we are mining to.
+         action(
+            {{ _self, name("active") }},
+            token_contract_name, // 
+            name("issue"),       // Action
+            std::make_tuple(to, quantity, std::string("Reputation Earned"))  // name to, asset quantity, string memo
+         ).send();
+      }
    }
 
    void hytale_reputation::regserver( name user, string memo ) {
@@ -124,47 +137,25 @@ namespace stuyk_eos {
 
       eosio_assert(memo.size() <= 256, "memo too large");
       eosio_assert(quantity.amount != 0, "amount must be greater than zero");
-      asset actual_amount = asset(quantity.amount, hrep_symbol); // Re-Classify Currency
+      eosio_assert(quantity.symbol == hrep_symbol, "symbol precision mismatch");
 
       reputation_table rep_table = reputation_table(_self, _self.value);
       auto user_itr = rep_table.find(user.value);
-      eosio_assert(user_itr != rep_table.end(), "User has not been registered yet.");
-      eosio_assert(user_itr->is_server, "User is not registered as a server owner.");
-      eosio_assert(user_itr->staked_tokens.amount >= actual_amount.amount, "Cannot reclaim an amount greater than available.");
+      eosio_assert(user_itr != rep_table.end(), "user has not been registered yet.");
+      eosio_assert(user_itr->staked_tokens.amount >= quantity.amount, "cannot reclaim an amount greater than available.");
 
       rep_table.modify(user_itr, user, [&](auto& rep) {
-         rep.staked_tokens.amount -= actual_amount.amount;
-         rep.unstake_time          = time_point_sec(now() + (seconds_in_a_day * unstake_days)); // Days
-         rep.unstake_amount       += actual_amount;
-      });
-   }
-
-   void hytale_reputation::claim( name user, string memo ) {
-      require_auth(user);
-      require_recipient(user);
-      eosio_assert(memo.size() <= 256, "memo too large");
-
-      reputation_table rep_table = reputation_table(_self, _self.value);
-      auto user_itr = rep_table.find(user.value);
-      eosio_assert(user_itr != rep_table.end(), "User has not been registered yet.");
-      eosio_assert(user_itr->unstake_amount.amount > 0, "Nothing to reclaim.");
-      eosio_assert(user_itr->unstake_time <= time_point_sec(now()), "Your tokens are still being unstaked. Try again in a day or two.");
-
-      asset amount_to_recieve = user_itr->unstake_amount;
-
-      rep_table.modify(user_itr, user, [&](auto& rep) {
-         rep.unstake_amount.amount = 0;
+         rep.staked_tokens.amount -= quantity.amount;
       });
 
-      // Action
       action(
-         permission_level{ user, name("active") },
+         permission_level{ _self, name("active") },
          token_contract_name, // 
          name("transfer"),    // Action
-         std::make_tuple(token_contract_name, user, amount_to_recieve, "Unstaked tokens.")  // name to, asset quantity, string memo
+         std::make_tuple(_self, user, quantity, std::string("Tokens have been unstaked. They cannot be re-staked."))  // name to, asset quantity, string memo
       ).send();
    }
 }
 
 // Action Definitions
-EOSIO_DISPATCH( stuyk_eos::hytale_reputation, (reguser)(mine)(stake)(regserver)(unregserver)(unstake)(claim) )
+EOSIO_DISPATCH( stuyk_eos::hytale_reputation, (reguser)(mine)(regserver)(unregserver)(unstake)(init) )

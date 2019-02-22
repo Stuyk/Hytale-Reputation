@@ -28,7 +28,6 @@ void token::create( name   issuer,
     });
 }
 
-
 void token::issue( name to, asset quantity, string memo )
 {
     auto sym = quantity.symbol;
@@ -58,30 +57,6 @@ void token::issue( name to, asset quantity, string memo )
                           { st.issuer, to, quantity, memo }
       );
     }
-}
-
-void token::retire( asset quantity, string memo )
-{
-    auto sym = quantity.symbol;
-    eosio_assert( sym.is_valid(), "invalid symbol name" );
-    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
-
-    stats statstable( _self, sym.code().raw() );
-    auto existing = statstable.find( sym.code().raw() );
-    eosio_assert( existing != statstable.end(), "token with symbol does not exist" );
-    const auto& st = *existing;
-
-    require_auth( st.issuer );
-    eosio_assert( quantity.is_valid(), "invalid quantity" );
-    eosio_assert( quantity.amount > 0, "must retire positive quantity" );
-
-    eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
-
-    statstable.modify( st, same_payer, [&]( auto& s ) {
-       s.supply -= quantity;
-    });
-
-    sub_balance( st.issuer, quantity );
 }
 
 void token::transfer( name    from,
@@ -136,35 +111,6 @@ void token::add_balance( name owner, asset value, name ram_payer )
    }
 }
 
-void token::open( name owner, const symbol& symbol, name ram_payer )
-{
-   require_auth( ram_payer );
-
-   auto sym_code_raw = symbol.code().raw();
-
-   stats statstable( _self, sym_code_raw );
-   const auto& st = statstable.get( sym_code_raw, "symbol does not exist" );
-   eosio_assert( st.supply.symbol == symbol, "symbol precision mismatch" );
-
-   accounts acnts( _self, owner.value );
-   auto it = acnts.find( sym_code_raw );
-   if( it == acnts.end() ) {
-      acnts.emplace( ram_payer, [&]( auto& a ){
-        a.balance = asset{0, symbol};
-      });
-   }
-}
-
-void token::close( name owner, const symbol& symbol )
-{
-   require_auth( owner );
-   accounts acnts( _self, owner.value );
-   auto it = acnts.find( symbol.code().raw() );
-   eosio_assert( it != acnts.end(), "Balance row already deleted or never existed. Action won't have any effect." );
-   eosio_assert( it->balance.amount == 0, "Cannot close because the balance is not zero." );
-   acnts.erase( it );
-}
-
 } /// namespace eosio
 
-EOSIO_DISPATCH( eosio::token, (create)(issue)(transfer)(open)(close)(retire) )
+EOSIO_DISPATCH( eosio::token, (create)(issue)(transfer))

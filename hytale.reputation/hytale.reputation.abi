@@ -1,20 +1,11 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Sat Feb  2 00:39:03 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Feb 18 19:03:03 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
-            "name": "claim",
+            "name": "init",
             "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                },
-                {
-                    "name": "memo",
-                    "type": "string"
-                }
-            ]
+            "fields": []
         },
         {
             "name": "mine",
@@ -27,6 +18,10 @@
                 {
                     "name": "user_to",
                     "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
                 },
                 {
                     "name": "memo",
@@ -76,7 +71,7 @@
                 },
                 {
                     "name": "rep_left_for_day",
-                    "type": "uint64"
+                    "type": "asset"
                 },
                 {
                     "name": "is_server",
@@ -85,32 +80,16 @@
                 {
                     "name": "staked_tokens",
                     "type": "asset"
-                },
-                {
-                    "name": "unstake_time",
-                    "type": "time_point_sec"
-                },
-                {
-                    "name": "unstake_amount",
-                    "type": "asset"
                 }
             ]
         },
         {
-            "name": "stake",
+            "name": "state",
             "base": "",
             "fields": [
                 {
-                    "name": "user",
-                    "type": "name"
-                },
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "memo",
-                    "type": "string"
+                    "name": "is_initialized",
+                    "type": "uint8"
                 }
             ]
         },
@@ -150,8 +129,8 @@
     "types": [],
     "actions": [
         {
-            "name": "claim",
-            "type": "claim",
+            "name": "init",
+            "type": "init",
             "ricardian_contract": ""
         },
         {
@@ -170,11 +149,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "stake",
-            "type": "stake",
-            "ricardian_contract": ""
-        },
-        {
             "name": "unregserver",
             "type": "unregserver",
             "ricardian_contract": ""
@@ -189,6 +163,13 @@
         {
             "name": "reputation",
             "type": "reputation",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "state",
+            "type": "state",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
