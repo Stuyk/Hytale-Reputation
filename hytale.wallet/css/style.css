@@ -1,0 +1,47 @@
+@font-face {
+    font-family: "Penumbra Web Pro Serif";
+    src: url("../fonts/Penumbra\ Web\ Pro\ Serif.eot");
+    src: 
+        url("../fonts/Penumbra\ Web\ Pro\ Serif.otf") format("opentype"),
+        url("../fonts/Penumbra\ Web\ Pro\ Serif.svg") format("svg"),
+        url("../fonts/Penumbra\ Web\ Pro\ Serif.woff") format("woff");
+}
+
+body {
+    background-color: rgba(22, 33, 48, 255);
+}
+
+.nav-tabs, .nav-tabs:hover {
+    border: 0px !important;
+}
+
+.nav-link {
+    font-family: "Penumbra Web Pro Serif";
+    font-weight: bold;
+    font-size: 1em;
+    color: rgba(217, 228, 240, 255) !important;
+    letter-spacing: 0.2em;
+    margin-right: 5rem !important;
+}
+
+.nav-link:hover, .nav-link:active {
+    color: rgba(255, 250, 205, 255) !important;
+    letter-spacing: 0.2em;
+    border: 0px !important;
+}
+
+.navbar {
+    background-color: rgba(44, 64, 96, 255);
+}
+
+.active-link {
+    color: rgba(255, 250, 205, 255) !important;
+}
+
+.disabled-link {
+    color: rgba(0, 0, 0, 255) !important;
+}
+
+p {
+    text-align: justify;
+}
