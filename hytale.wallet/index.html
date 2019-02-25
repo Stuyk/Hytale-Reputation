@@ -28,10 +28,7 @@
                         <a class="nav-link" id="link-about" href="#about">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="link-mine" href="#mine">Mine</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="link-balance" href="#balance">Balance</a>
+                        <a class="nav-link" id="link-mine" href="#mine">Register / Mine</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="link-transfer" href="#transfer">Transfer</a>
@@ -43,83 +40,111 @@
             </div>
         </nav>
         <div class="container text-light mt-3 balance-box">
-            <div class="alert alert-light text-center">
-                <h3>Welcome!</h3>
+            <div class="alert alert-primary text-center">
                 <span id="balance">Balance: 0.0000 HYTALE</span> - <span id="mineable">Mineable: 0.0000 HYTALE</span> - <span id="claimtime">Time Left Until Claim: 0</span>
             </div>
         </div>
-        <div class="container text-light mt-5">
+        <div class="container text-light mt-3">
             <!--- About Section --->
             <div id="content-about">
                 <div class="row">
                     <div class="col-xs"></div>
                     <div class="col-md">
-                        <h4>About</h4>
-                        <h6>Basic Guide:</h6>
-                        <p>
-                            Joining in on our public beta is quite simple. You'll need to grab the Scatter Wallet from the useful links section as well as a private / public key. Remember that you need to write these keys down somewhere and save them. You're going to import the private key into your Scatter Wallet. Then create an account using the Jungle Testnet link provided to the side. Simply hit Create Account and supply a 12 character or less username. As well as your public key in the Owner and Active fields.
-                        </p>
-
-                        <h6>Additional Information:</h6>
-                        <p>
-                            To add the Jungle Testnet to Scatter you hit the COG for settings in the top right. Click on Networks in the 'Danger Zone' section.
-                        </p>
-                        <h6>Add the following network:</h6>
-                        <ul>
-                            <li><b>Name:</b> Jungle Testnet 2.0</li>
-                            <li><b>Host:</b> jungle2.cryptolions.io</li>
-                            <li><b>Protocol:</b> https</li>
-                            <li><b>Port:</b> 443</li>
-                            <li><b>Chain:</b> e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473</li>
-                            <li><a href="https://i.imgur.com/UPOeIVX.png">Image Example</a></li>
-                        </ul>
+                        <div class="card">
+                            <div class="card-body bg-light text-dark">
+                                <div class="card-title">
+                                    <h5>About</h5>
+                                </div>
+                                <div class="card-text">
+                                        <h6>Basic Guide:</h6>
+                                        <p>
+                                            Joining in on our public beta is quite simple. You'll need to grab the Scatter Wallet from the useful links section as well as a private / public key. Remember that you need to write these keys down somewhere and save them. You're going to import the private key into your Scatter Wallet. Then create an account using the Jungle Testnet link provided to the side. Simply hit Create Account and supply a 12 character or less username. As well as your public key in the Owner and Active fields.
+                                        </p>
+                                        <br/>
+                                        <h6>Additional Information:</h6>
+                                        <p>
+                                            To add the Jungle Testnet to Scatter you hit the COG for settings in the top right. Click on Networks in the 'Danger Zone' section.
+                                        </p>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="card">
+                            <div class="card-body bg-light text-dark">
+                                <div class="card-title">
+                                    <h6>Network Information</h6>
+                                </div>
+                                <div class="card-text">
+                                    <ul class="list-group bg-light text-dark">
+                                        <li class="list-group-item"><b>Name:</b> Jungle Testnet 2.0</li>
+                                        <li class="list-group-item"><b>Host:</b> jungle2.cryptolions.io</li>
+                                        <li class="list-group-item"><b>Protocol:</b> https</li>
+                                        <li class="list-group-item"><b>Port:</b> 443</li>
+                                        <li class="list-group-item"><b>Chain:</b> e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473</li>
+                                        <li class="list-group-item"><a href="https://i.imgur.com/UPOeIVX.png">Image Example</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                       
                     </div>
                     <div class="col-md">
-                        <h4>Useful Links</h4>
-                        <ul>
-                            <li><a href="https://get-scatter.com/" title="Get Scatter">Scatter Wallet</a></li>
-                            <li><a href="https://nadejde.github.io/eos-token-sale/" title="Generate Testnet Keypairs">Private and Public Key Generator</a></li>
-                            <li><a href="https://monitor.jungletestnet.io/#home" title="Create Account on Jungle">Create a Jungle 2.0 Testnet Account</a></li>
-                        </ul>
+                        <div class="card">
+                            <div class="card-body bg-light text-dark">
+                                <div class="card-title">
+                                        <h6>Useful Links</h6>
+                                </div>
+                                <div class="card-text">
+                                    <ul class="list-group bg-light text-dark">
+                                        <li class="list-group-item"><a href="https://get-scatter.com/" title="Get Scatter">Scatter Wallet</a></li>
+                                        <li class="list-group-item"><a href="https://nadejde.github.io/eos-token-sale/" title="Generate Testnet Keypairs">Private and Public Key Generator</a></li>
+                                        <li class="list-group-item"><a href="https://monitor.jungletestnet.io/#home" title="Create Account on Jungle">Create a Jungle 2.0 Testnet Account</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-xs"></div>
                 </div>
             </div>
-            <!--- Mine Section --->
+            <!--- Register / Mine Section --->
             <div id="content-mine">
                 <div class="row">
                     <div class="col-xs"></div>
                     <div class="col-md">
-                        <h4>Mining</h4>
-                        <p>New users may register their EOS Testnet account to participate in the beta mining period. Every 24 hours registered users can send up to 5 tokens to any other friend who is currently registered. Once those 5 tokens have been mined they cannot send any more. However, you can always transfer any additional tokens you have earned. 
-                        <br/><br/>
-                        Remember to have SCATTER open.
-                        </p>
-                        <button type="button" class="btn btn-primary btn-dark" id="action-register">Register</button>
-                    </div>
-                    <div class="col-md">
-                        <h4>Send Friend Hytale Tokens</h4>
-                        <p>Fill in the information below to show someone your appreciation. Please note that we use a precision of 4 for the quantity. 1 is not equal to 1.0000.
-                        <br/>
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="input-mining" placeholder="To Username" aria-label="To Username" aria-describedby="basic-addon1">
-                            <input type="text" class="form-control" id="input-mining-quantity" placeholder="0.0001" aria-label="Username" aria-describedby="basic-addon1">
-                            <button type="button" class="btn btn-primary btn-dark" id="action-mine">Mine Tokens</button>
+                        <div class="card">
+                            <div class="card-body bg-light text-dark">
+                                <div class="card-title">
+                                    <h5>Register</h5>
+                                </div>
+                                <div class="card-text">
+                                    <p>New users may register their EOS Testnet account to participate in the beta mining period. Every 24 hours registered users can send up to 5 tokens to any other friend who is currently registered. Once those 5 tokens have been mined they cannot send any more.</p>
+                                    
+                                      
+                                    <p>However, you can always transfer any additional tokens you have earned.</p>
+
+                                    <p>Remember to have SCATTER open.</p>
+                                    <button type="button" class="btn btn-primary btn-dark" id="action-register">Register</button>
+                                </div>
+                            </div>
                         </div>
-                        </p>
-                    </div>
-                    <div class="col-xs"></div>
-                </div>
-            </div>
-            <!--- Balance Section --->
-            <div id="content-balance">
-                <div class="row">
-                    <div class="col-xs"></div>
-                    <div class="col-md">
-                        <h4>Balance</h4>
                     </div>
                     <div class="col-md">
-                        
+                        <div class="card">
+                            <div class="card-body bg-light text-dark">
+                                <div class="card-title">
+                                    <h5>Mine Tokens and Reward a Friend</h5>
+                                </div>
+                                <div class="card-text">
+                                    <p>Fill in the information below to show someone your appreciation. Please note that we use a precision of 4 for the quantity. 1 is not equal to 1.0000.</p>
+                                    <div class="input-group mb-3">
+                                            <input type="text" class="form-control" id="input-mining" placeholder="To Username" aria-label="To Username" aria-describedby="basic-addon1">
+                                            <input type="text" class="form-control" id="input-mining-quantity" placeholder="0.0001" aria-label="Username" aria-describedby="basic-addon1">
+                                            <button type="button" class="btn btn-primary btn-dark" id="action-mine">Mine Tokens</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-xs"></div>
                 </div>
@@ -129,10 +154,32 @@
                 <div class="row">
                     <div class="col-xs"></div>
                     <div class="col-md">
-                        <h4>Transfer</h4>
+                        <div class="card">
+                            <div class="card-body bg-light text-dark">
+                                <div class="card-title">
+                                    <h5>About Transfer</h5>
+                                </div>
+                                <div class="card-text">
+                                    <p>Transfer tokens from yourself to another user using the following form. Ensure that the quantity is greater than zero. There is not limit to how much you can transfer.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md">
-                        
+                        <div class="card">
+                            <div class="card-body bg-light text-dark">
+                                <div class="card-title">
+                                    <h5>Transfer Tokens</h5>
+                                </div>
+                                <div class="card-text">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" id="input-transfer-to" placeholder="To Username" aria-label="To Username" aria-describedby="basic-addon1">
+                                        <input type="text" class="form-control" id="input-transfer-quantity" placeholder="0.0001" aria-label="Quantity" aria-describedby="basic-addon1">
+                                        <button type="button" class="btn btn-primary btn-dark" id="action-transfer">Send Tokens</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-xs"></div>
                 </div>

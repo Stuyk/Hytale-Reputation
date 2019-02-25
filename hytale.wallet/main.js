@@ -62,82 +62,109 @@ class EOSHandler {
     }
 
     async Register() {
-        var result = await this.api.transact({
-            actions: [{
-                account: this.ContractAccount,
-                name: 'reguser',
-                authorization: [{
-                    actor: this.account.name,
-                    permission: this.account.authority,
-                }],
-                data: {
-                        user: this.account.name,
-                        memo: `Registered ${this.account.name} for Mining`,
-                },
-            }]
-        }, {
-            blocksBehind: 3,
-            expireSeconds: 30,
+        var isAccountAlreadyRegistered = false;
+
+        var result_mining = await this.rpc.get_table_rows({
+            json: true,
+            code: 'hytalecontra',
+            scope: 'hytalecontra',
+            table: 'reputation',
+            limit: 9999,
+        }).then((result) => {
+            for(var i = 0; i < result.rows.length; i++) {
+                if(result.rows[i].user == this.account.name) {
+                    isAccountAlreadyRegistered = true;
+                    break;
+                }
+            }
         });
 
-
-        if (result.transaction_id !== undefined) {
-            $(".results").append(`<p>Registered ${this.account.name} for mining.</p>`);
+        if (isAccountAlreadyRegistered) {
+            display_information("Error", "Account is already registered.");
             return;
         }
 
-        console.log(result);
-        $(".results").append(`<p>Account ${this.account.name} is already registered.</p>`);
+        try {
+            var result = await this.api.transact({
+                actions: [{
+                    account: this.ContractAccount,
+                    name: 'reguser',
+                    authorization: [{
+                        actor: this.account.name,
+                        permission: this.account.authority,
+                    }],
+                    data: {
+                            user: this.account.name,
+                            memo: `Registered ${this.account.name} for Mining`,
+                    },
+                }]
+            }, {
+                blocksBehind: 3,
+                expireSeconds: 30,
+            });
+
+            display_information("Success", "Account was registered successfully.");
+        } catch(error) {
+            display_information("Error", "Account is already registered.");
+        }
     }
     
     async Mine(to, quantity) {
-        console.log("Test");
-        var result = await this.api.transact({
-            actions: [{
-                account: this.ContractAccount,
-                name: 'mine',
-                authorization: [{
-                    actor: this.account.name,
-                    permission: this.account.authority,
-                }],
-                data: {
-                        user_from: this.account.name,
-                        user_to: to,
-                        quantity: `${quantity} HYTALE`,
-                        memo: `User ${this.account.name} awarded ${to} ${quantity} HYTALE`,
-                },
-            }]
-        }, {
-            blocksBehind: 3,
-            expireSeconds: 30,
-        });
+        try {
+            var result = await this.api.transact({
+                actions: [{
+                    account: this.ContractAccount,
+                    name: 'mine',
+                    authorization: [{
+                        actor: this.account.name,
+                        permission: this.account.authority,
+                    }],
+                    data: {
+                            user_from: this.account.name,
+                            user_to: to,
+                            quantity: `${quantity} HYTALE`,
+                            memo: `User ${this.account.name} awarded ${to} ${quantity} HYTALE`,
+                    },
+                }]
+            }, {
+                blocksBehind: 3,
+                expireSeconds: 30,
+            });
 
-
-        if (result.transaction_id !== undefined) {
             display_information("Success", `Tokens were successfully mined and sent to: ${to}`);
             EOSInstance.Update();
-            return;
-        } else {
+        } catch(error) {
             display_information("Failed", `Either not enough mineable tokens available, the account doesn't exist, or something else.`);
-            return;
         }
     }
 
-    async GetBalance(account_name) {
-        var result = await this.rpc.get_table_rows({
-            json: true,
-            code: 'hytaletokens',
-            scope: account_name,
-            table: 'accounts',
-            limit: 10,
-        });
-    
-        if (result.rows[0].balance !== undefined) {
-            $(".results").append(`<p>${account_name} has a balance of ${result.rows[0].balance}</p>`);
-            return;
-        }
+    async Transfer(user_to, quantity) {
+        try {
+            var result = await this.api.transact({
+                actions: [{
+                    account: "hytaletokens",
+                    name: 'transfer',
+                    authorization: [{
+                        actor: this.account.name,
+                        permission: this.account.authority,
+                    }],
+                    data: {
+                            from: this.account.name,
+                            to: user_to,
+                            quantity: `${quantity} HYTALE`,
+                            memo: `User ${this.account.name} transferred ${quantity} HYTALE to ${user_to}`,
+                    },
+                }]
+            }, {
+                blocksBehind: 3,
+                expireSeconds: 30,
+            });
 
-         $(".results").append(`<p>Account name does not have balance or result is not available.</p>`);
+            display_information("Success", `User ${this.account.name} transferred ${quantity} HYTALE to ${user_to}`);
+            EOSInstance.Update();
+        } catch (error) {
+            display_information("Error", `Either incorrect balance available or username does not exist.`);
+        }
     }
 
     async Update() {
@@ -148,7 +175,10 @@ class EOSHandler {
             table: 'accounts',
             limit: 1,
         }).then((result_tokens) => {
-            console.log(result_tokens);
+            if (result_tokens.rows.length > 0) {
+                var balance_sheet = `Balance: ${result_tokens.rows[0].balance}`;
+                $("#balance").text(`${balance_sheet}`);
+            }
         });
 
         var result_mining = await this.rpc.get_table_rows({
@@ -156,7 +186,7 @@ class EOSHandler {
             code: 'hytalecontra',
             scope: 'hytalecontra',
             table: 'reputation',
-            limit: 50,
+            limit: 9999,
         }).then((result_mining) => {
             for (var i = 0; i < result_mining.rows.length; i++) {
                 if (result_mining.rows[i].user == this.account.name) {
@@ -168,17 +198,19 @@ class EOSHandler {
                 }
             }
         });
+
+        $("#action-register").prop("disabled","true");
     }
 }
 
 function IsScatterInitialized() {
     if (EOSInstance === undefined) {
-        $(".results").append(`<p>Connect with Scatter first</p>`);
+        display_information("Error", "Must connect with Scatter first.");
         return false;
     }
 
     if (!EOSInstance.initialized) {
-        $(".results").append(`<p>Connect with Scatter first.</p>`);
+        display_information("Error", "Scatter has not been initialized yet.");
         return false;
     }
 
@@ -186,10 +218,8 @@ function IsScatterInitialized() {
 }
 
 $("#action-connect").click(function() {
-    if (EOSInstance !== undefined) {
-        EOSInstance = undefined;
+    if (EOSInstance !== undefined)
         return;
-    }
 
     EOSInstance = new EOSHandler("HytaleReputation", "hytalecontra");
     EOSInstance.Connect();
@@ -206,22 +236,62 @@ $("#action-mine").click(function() {
     if (!IsScatterInitialized())
         return;
     
-    var account_name = $("#input-mining").val();
+    var account_name = $("#input-mining").val().toLowerCase();
 
-    if (account_name == undefined)
+    if (account_name == undefined) {
+        display_information("Error", "Account Name is undefined.");
         return;
+    }
     
-    if (account_name.length >= 13) {
-        console.log("name too long");
+    if (account_name.length > 12 || account_name.length <= 0) {
+        display_information("Error", "Account Name provided must be less than or equal to 12 characters and greater than 0 characters.");
+        return;
+    }
+
+    if (account_name == EOSInstance.account.name) {
+        display_information("Error", "Cannot send to self.");
         return;
     }
 
     var quantity = $("#input-mining-quantity").val();
 
-    if (quantity <= 0)
+    if (quantity <= 0) {
+        display_information("Error", "Quantity must be greater than or equal to: 0.0001");
         return;
+    }
 
     EOSInstance.Mine(account_name, quantity);
+});
+
+$("#action-transfer").click(function() {
+    if (!IsScatterInitialized)
+        return;
+
+    var account_name = $("#input-transfer-to").val().toLowerCase();
+
+    if (account_name == undefined) {
+        display_information("Error", "Account Name is undefined.");
+        return;
+    }
+    
+    if (account_name.length > 12 || account_name.length <= 0) {
+        display_information("Error", "Account Name provided must be less than or equal to 12 characters and greater than 0 characters.");
+        return;
+    }
+
+    if (account_name == EOSInstance.account.name) {
+        display_information("Error", "Cannot send to self.");
+        return;
+    }
+
+    var quantity = $("#input-transfer-quantity").val();
+
+    if (quantity <= 0) {
+        display_information("Error", "Quantity must be greater than or equal to: 0.0001");
+        return;
+    }
+
+    EOSInstance.Transfer(account_name, quantity);
 });
 
 window.GetBalance = async function GetBalance() {
@@ -239,7 +309,7 @@ window.GetBalance = async function GetBalance() {
 }
 
 // =============== WEB FUNCTIONS =====================>
-const content_div_ids   = ["content-about", "content-mine", "content-balance", "content-transfer", "content-servers"];
+const content_div_ids   = ["content-about", "content-mine", "content-transfer", "content-servers"];
 const default_link      = `link-about`;
 const default_content   = `${content_div_ids[0]}`;
 const active_link_class = "active-link"
