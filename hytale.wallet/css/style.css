@@ -9,6 +9,7 @@
 
 body {
     background-color: rgba(22, 33, 48, 255);
+    min-height: 100vh;
 }
 
 .nav-tabs, .nav-tabs:hover {
@@ -20,18 +21,17 @@ body {
     font-weight: bold;
     font-size: 1em;
     color: rgba(217, 228, 240, 255) !important;
-    letter-spacing: 0.2em;
-    margin-right: 5rem !important;
+    letter-spacing: 0.1em;
+    margin-right: 3rem !important;
 }
 
 .nav-link:hover, .nav-link:active {
     color: rgba(255, 250, 205, 255) !important;
-    letter-spacing: 0.2em;
-    border: 0px !important;
+    letter-spacing: 0.1em;
 }
 
 .navbar {
-    background-color: rgba(44, 64, 96, 255);
+    background-color: rgba(44, 64, 96, 1);
 }
 
 .active-link {
@@ -44,4 +44,8 @@ body {
 
 p {
     text-align: justify;
+}
+
+footer {
+    background-color: rgba(44, 64, 96, 1);
 }

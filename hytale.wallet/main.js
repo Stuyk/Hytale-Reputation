@@ -10,6 +10,9 @@ const network = {
     port: 443,
     chainId:'e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473'
 }
+const token_contract = "tokenshytale";
+const hytale_contract = "contrahytale";
+const imgur_pre = "https://i.imgur.com/";
 
 var EOSInstance;
 
@@ -53,6 +56,7 @@ class EOSHandler {
                 console.log("Connected Successfully");
                 $("#action-connect").addClass("disabled");
                 $("#action-connect").addClass("disabled-link");
+                $("#action-connect").text("Disconnect");
                 $(".balance-box").show();
                 EOSInstance.Update();
             }).catch(error => {
@@ -66,8 +70,8 @@ class EOSHandler {
 
         var result_mining = await this.rpc.get_table_rows({
             json: true,
-            code: 'hytalecontra',
-            scope: 'hytalecontra',
+            code: hytale_contract,
+            scope: hytale_contract,
             table: 'reputation',
             limit: 9999,
         }).then((result) => {
@@ -104,8 +108,10 @@ class EOSHandler {
             });
 
             display_information("Success", "Account was registered successfully.");
+            EOSInstance.Update();
         } catch(error) {
             display_information("Error", "Account is already registered.");
+            console.log(error);
         }
     }
     
@@ -135,6 +141,7 @@ class EOSHandler {
             EOSInstance.Update();
         } catch(error) {
             display_information("Failed", `Either not enough mineable tokens available, the account doesn't exist, or something else.`);
+            console.log(error);
         }
     }
 
@@ -142,7 +149,7 @@ class EOSHandler {
         try {
             var result = await this.api.transact({
                 actions: [{
-                    account: "hytaletokens",
+                    account: token_contract,
                     name: 'transfer',
                     authorization: [{
                         actor: this.account.name,
@@ -164,13 +171,14 @@ class EOSHandler {
             EOSInstance.Update();
         } catch (error) {
             display_information("Error", `Either incorrect balance available or username does not exist.`);
+            console.log(error);
         }
     }
 
     async Update() {
         var result_tokens = await this.rpc.get_table_rows({
             json: true,
-            code: 'hytaletokens',
+            code: token_contract,
             scope: this.account.name,
             table: 'accounts',
             limit: 1,
@@ -183,23 +191,47 @@ class EOSHandler {
 
         var result_mining = await this.rpc.get_table_rows({
             json: true,
-            code: 'hytalecontra',
-            scope: 'hytalecontra',
+            code: hytale_contract,
+            scope: this.account.name,
             table: 'reputation',
-            limit: 9999,
+            limit: 1,
         }).then((result_mining) => {
-            for (var i = 0; i < result_mining.rows.length; i++) {
-                if (result_mining.rows[i].user == this.account.name) {
-                    var mining = `Mineable: ${result_mining.rows[i].rep_left_for_day}`;
-                    var nextclaimtime = `Time Left Until Claim: ${result_mining.rows[i].next_claim_time}`;
-                    $("#mineable").text(`${mining}`);
-                    $("#claimtime").text(`${nextclaimtime}`);
-                    break;
-                }
+            if (result_mining.rows[0].user == this.account.name) {
+                var mining = `Mineable: ${result_mining.rows[0].rep_left_for_day}`;
+                var nextclaimtime = `Time Left Until Claim: ${result_mining.rows[0].next_claim_time}`;
+                $("#mineable").text(`${mining}`);
+                $("#claimtime").text(`${nextclaimtime}`);
+                $("#action-register").prop("disabled","true");
             }
         });
+    }
 
-        $("#action-register").prop("disabled","true");
+    async SetAvatar(avatar) {
+        try {
+            var result = await this.api.transact({
+                actions: [{
+                    account: this.ContractAccount,
+                    name: 'setavatar',
+                    authorization: [{
+                        actor: this.account.name,
+                        permission: this.account.authority,
+                    }],
+                    data: {
+                            user: this.account.name,
+                            imgur_link: `${avatar}`,
+                    },
+                }]
+            }, {
+                blocksBehind: 3,
+                expireSeconds: 30,
+            });
+
+            display_information("Success", "Avatar was set successfully!");
+            EOSInstance.Update();
+        } catch(error) {
+            display_information("Error", "Ran into an unknown issue.");
+            console.log(error);
+        }
     }
 }
 
@@ -221,7 +253,7 @@ $("#action-connect").click(function() {
     if (EOSInstance !== undefined)
         return;
 
-    EOSInstance = new EOSHandler("HytaleReputation", "hytalecontra");
+    EOSInstance = new EOSHandler("HytaleReputation", hytale_contract);
     EOSInstance.Connect();
 });
 
@@ -294,22 +326,29 @@ $("#action-transfer").click(function() {
     EOSInstance.Transfer(account_name, quantity);
 });
 
-window.GetBalance = async function GetBalance() {
-    if (!IsScatterInitialized())
+$("#action-set-avatar").click(function() {
+    if (!IsScatterInitialized)
         return;
 
-    var account_name = $("#text-input").val();
+    var avatar_extension = $("#input-avatar").val();
 
-    if (account_name.length >= 13) {
-        $(".results").append(`<p>Account name is too long. Must be less than 12 characters.</p>`);
+    if (avatar_extension.length != 11) {
+        display_information("Error", "Extension is incorrect length");
         return;
     }
 
-    EOSInstance.GetBalance(account_name);
-}
+    var extension = avatar_extension.substr(avatar_extension.length - 4);
+
+    if (extension.includes(".jpg") || extension.includes(".png")) {
+        EOSInstance.SetAvatar(avatar_extension);
+    } else {
+        display_information("Error", "Extension must be .png or .jpg");
+        return;
+    }
+});
 
 // =============== WEB FUNCTIONS =====================>
-const content_div_ids   = ["content-about", "content-mine", "content-transfer", "content-servers"];
+const content_div_ids   = ["content-about", "content-mine", "content-transfer", "content-servers", "content-settings"];
 const default_link      = `link-about`;
 const default_content   = `${content_div_ids[0]}`;
 const active_link_class = "active-link"
