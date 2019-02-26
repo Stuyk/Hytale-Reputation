@@ -1,7 +1,17 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Feb 18 19:03:03 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Feb 25 17:37:57 2019",
     "version": "eosio::abi/1.1",
     "structs": [
+        {
+            "name": "clearavatar",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                }
+            ]
+        },
         {
             "name": "init",
             "base": "",
@@ -38,7 +48,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "memo",
+                    "name": "server_address",
                     "type": "string"
                 }
             ]
@@ -74,22 +84,80 @@
                     "type": "asset"
                 },
                 {
-                    "name": "is_server",
+                    "name": "is_server_owner",
                     "type": "bool"
                 },
                 {
                     "name": "staked_tokens",
                     "type": "asset"
+                },
+                {
+                    "name": "successful_trades",
+                    "type": "uint64"
+                },
+                {
+                    "name": "avatar",
+                    "type": "string?"
+                },
+                {
+                    "name": "server_address",
+                    "type": "string?"
                 }
             ]
         },
         {
-            "name": "state",
+            "name": "setavatar",
             "base": "",
             "fields": [
                 {
-                    "name": "is_initialized",
-                    "type": "uint8"
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "imgur_link",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "trades",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "reciever",
+                    "type": "name"
+                },
+                {
+                    "name": "cost",
+                    "type": "asset"
+                },
+                {
+                    "name": "data",
+                    "type": "uint8[]"
+                },
+                {
+                    "name": "owner_sig",
+                    "type": "bool"
+                },
+                {
+                    "name": "reciever_sig",
+                    "type": "bool"
+                },
+                {
+                    "name": "owner_hytale_name",
+                    "type": "string"
+                },
+                {
+                    "name": "reciever_hytale_name",
+                    "type": "string"
+                },
+                {
+                    "name": "conditions",
+                    "type": "string"
                 }
             ]
         },
@@ -100,10 +168,6 @@
                 {
                     "name": "user",
                     "type": "name"
-                },
-                {
-                    "name": "memo",
-                    "type": "string"
                 }
             ]
         },
@@ -129,6 +193,11 @@
     "types": [],
     "actions": [
         {
+            "name": "clearavatar",
+            "type": "clearavatar",
+            "ricardian_contract": ""
+        },
+        {
             "name": "init",
             "type": "init",
             "ricardian_contract": ""
@@ -146,6 +215,11 @@
         {
             "name": "reguser",
             "type": "reguser",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setavatar",
+            "type": "setavatar",
             "ricardian_contract": ""
         },
         {
@@ -168,8 +242,8 @@
             "key_types": []
         },
         {
-            "name": "state",
-            "type": "state",
+            "name": "trades",
+            "type": "trades",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

@@ -8,10 +8,6 @@ namespace stuyk_eos {
    void hytale_reputation::init() {
       require_auth(_self);
 
-      state_table_s _state(_self, _self.value);
-      auto state = _state.get_or_create(_self, {1});
-      _state.set(state, _self);
-
       action(
          {{ _self, name("active") }, { token_contract_name, name("active")}},
          token_contract_name,
@@ -23,7 +19,7 @@ namespace stuyk_eos {
    // Register a new user to recieve Hytale coins.
    void hytale_reputation::reguser( name user, string memo ) {
       require_auth(user);
-      reputation_table rep_table = reputation_table(_self, _self.value);
+      reputation_table rep_table = reputation_table(_self, user.value);
       auto user_acc = rep_table.find(user.value);
       eosio_assert(user_acc == rep_table.end(), "account already exists");
       
@@ -46,18 +42,19 @@ namespace stuyk_eos {
       eosio_assert(quantity.symbol == hrep_symbol, "smybol mismatch");
       eosio_assert(quantity.amount != 0, "amount must be greater than zero");
 
-      reputation_table rep_table = reputation_table(_self, _self.value);
-      auto user_from = rep_table.find(from.value);
-      eosio_assert(user_from != rep_table.end(), "Issuer has not been registered yet.");
+      reputation_table from_rep_table = reputation_table(_self, from.value);
+      auto user_from = from_rep_table.find(from.value);
+      eosio_assert(user_from != from_rep_table.end(), "Issuer has not been registered yet.");
 
-      auto user_to = rep_table.find(to.value);
-      eosio_assert(user_to != rep_table.end(), "Reciever has not been registered yet.");
+      reputation_table to_rep_table = reputation_table(_self, to.value);
+      auto user_to = to_rep_table.find(to.value);
+      eosio_assert(user_to != to_rep_table.end(), "Reciever has not been registered yet.");
       eosio_assert(memo.size() <= 256, "memo is too big");
 
       bool new_claim_period = false;
 
       // If a new day has started for the user's mining period, refresh available amount.
-      if (time_point_sec(now()) >= user_from->next_claim_time) {
+      if (time_point_sec(now()) > user_from->next_claim_time) {
          new_claim_period = true;
       }
 
@@ -67,15 +64,16 @@ namespace stuyk_eos {
 
       // If a new claim period has been reached... reset the mine amount.
       // As well as subtract the quantity we need to subtract.
-      rep_table.modify(user_from, from, [&](auto& rep) {
+      from_rep_table.modify(user_from, from, [&](auto& rep) {
          if (new_claim_period) {
             rep.rep_left_for_day.amount = default_mine_amount.amount;
+            rep.next_claim_time = time_point_sec(now() + seconds_in_a_day); 
          }
 
          rep.rep_left_for_day.amount -= quantity.amount;
       });
 
-      if (user_to->is_server) {
+      if (user_to->is_server_owner) {
          action(
             {{ _self, name("active") }},
             token_contract_name,
@@ -83,7 +81,7 @@ namespace stuyk_eos {
             std::make_tuple(_self, quantity, std::string("Reputation Earned as Server Owner"))  // name to, asset quantity, string memo
          ).send();
 
-         rep_table.modify(user_to, _self, [&](auto& rep) {
+         to_rep_table.modify(user_to, _self, [&](auto& rep) {
             rep.staked_tokens.amount = (quantity.amount + rep.staked_tokens.amount);
          });
       } else {
@@ -99,35 +97,34 @@ namespace stuyk_eos {
       }
    }
 
-   void hytale_reputation::regserver( name user, string memo ) {
+   void hytale_reputation::regserver( name user, string server_address ) {
       require_auth(user);
       require_recipient(user);
 
-      eosio_assert(memo.size() <= 256, "memo too large");
+      eosio_assert((server_address.length() <= 20 && server_address.length() >= 6), "address is too large or too big");
 
-      reputation_table rep_table = reputation_table(_self, _self.value);
+      reputation_table rep_table = reputation_table(_self, user.value);
       auto user_itr = rep_table.find(user.value);
       eosio_assert(user_itr != rep_table.end(), "Issuer has not been registered yet.");
-      eosio_assert(!user_itr->is_server, "Already registered as a server.");
+      eosio_assert(!user_itr->is_server_owner, "Already registered as a server.");
 
       rep_table.modify(user_itr, user, [&](auto& rep) {
-         rep.is_server = true;
+         rep.is_server_owner = true;
+         rep.server_address = server_address;
       });
    }
 
-   void hytale_reputation::unregserver( name user, string memo ) {
+   void hytale_reputation::unregserver( name user ) {
       require_auth(user);
-      require_recipient(user);
 
-      eosio_assert(memo.size() <= 256, "memo too large");
-
-      reputation_table rep_table = reputation_table(_self, _self.value);
+      reputation_table rep_table = reputation_table(_self, user.value);
       auto user_itr = rep_table.find(user.value);
       eosio_assert(user_itr != rep_table.end(), "Issuer has not been registered yet.");
-      eosio_assert(user_itr->is_server, "Already unregistered as a server.");
+      eosio_assert(user_itr->is_server_owner, "Already unregistered as a server.");
 
       rep_table.modify(user_itr, user, [&](auto& rep) {
-         rep.is_server = false;
+         rep.is_server_owner = false;
+         rep.server_address.reset();
       });
    }
 
@@ -139,7 +136,7 @@ namespace stuyk_eos {
       eosio_assert(quantity.amount != 0, "amount must be greater than zero");
       eosio_assert(quantity.symbol == hrep_symbol, "symbol precision mismatch");
 
-      reputation_table rep_table = reputation_table(_self, _self.value);
+      reputation_table rep_table = reputation_table(_self, user.value);
       auto user_itr = rep_table.find(user.value);
       eosio_assert(user_itr != rep_table.end(), "user has not been registered yet.");
       eosio_assert(user_itr->staked_tokens.amount >= quantity.amount, "cannot reclaim an amount greater than available.");
@@ -155,7 +152,36 @@ namespace stuyk_eos {
          std::make_tuple(_self, user, quantity, std::string("Tokens have been unstaked. They cannot be re-staked."))  // name to, asset quantity, string memo
       ).send();
    }
+
+   void hytale_reputation::setavatar( name user, string imgur_link ) {
+      require_auth(user);
+
+      reputation_table rep_table = reputation_table(_self, user.value);
+      auto user_itr = rep_table.find(user.value);
+      eosio_assert(user_itr != rep_table.end(), "user has not been registered yet.");
+
+      string extension = imgur_link.substr(imgur_link.length() - 4);
+
+      eosio_assert(imgur_link.length() <= 11, "imgur link cannot exceed 11 characters");
+      eosio_assert((extension == ".jpg") || (extension == ".png"), "extension must be png or jpg");
+
+      rep_table.modify(user_itr, user, [&](auto& rep) {
+         rep.avatar = imgur_link;
+      });
+   }
+
+   void hytale_reputation::clearavatar( name user ) {
+      require_auth(user);
+
+      reputation_table rep_table = reputation_table(_self, user.value);
+      auto user_itr = rep_table.find(user.value);
+      eosio_assert(user_itr != rep_table.end(), "user has not been registered yet.");
+
+      rep_table.modify(user_itr, user, [&](auto& rep) {
+         rep.avatar.reset();
+      });
+   }
 }
 
 // Action Definitions
-EOSIO_DISPATCH( stuyk_eos::hytale_reputation, (reguser)(mine)(regserver)(unregserver)(unstake)(init) )
+EOSIO_DISPATCH( stuyk_eos::hytale_reputation, (reguser)(mine)(regserver)(unregserver)(unstake)(init)(setavatar)(clearavatar) )
